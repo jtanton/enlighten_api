@@ -1,53 +1,59 @@
-''' 
-		Python script to get enphaseenergy system summary using Enlighten API
-		James Tanton 9/26/2018
+#########################################################################################
+## usage: python get-solarinfo.py [-h] -e endpoint
+##
+## Python script to get enphaseenergy system summary using Enlighten API
+##		James Tanton 9/26/2018
+## 		Help on getting started - https://developer.enphase.com/docs/quickstart.html	
+##		
+##		Your KEY and user values will be unique to your system of course
+##		Log into enphase to get your system id from the browser url
+##
+## Usage:
+##   optional arguments:
+##     -h, --help  show this help message and exit
+##
+##   required arguments:
+##     -e endpoint    Enlighten API endpoint (summary, inventory, etc)
+#########################################################################################
 
-		Help on getting started
-	  		https://developer.enphase.com/docs/quickstart.html	
-		
-		Your KEY and user values will be unique to your system of course
-		Log into enphase to get your system id from the browser url
-
-'''
-
-import requests, json, pprint
+import requests, json, pprint, os, argparse
 
 def getcontent(URL):
-	print URL # Debug line comment out or remove
+	#print URL # Debug line comment out or remove
 	r = requests.get(URL) #Fetching response from URL
-	print 'get processed' # Debug line as well
-	print r.content # Display unformated json response
+	#print 'get processed' # Debug line as well
+	#print r.content # Display unformated json response
 	data = json.loads(r.text) # Format as JSON
-	print data 
-	print 'pprinted json \n'
+	print 'raw data: \n' + r.content 
+	print '\n pprinted json:'
 	pprint.pprint(data)
-	
+	return data
+
 # Sample URL 
 # URL='https://api.enphaseenergy.com/api/v2/systems/{your system id}/summary?key=xxxxxxx&user_id=xxxxxxx'
+# '/arrays?range=today&view=energy_production'
 
+## MAIN
+# Grab all the required arguments from the command line.
+parser = argparse.ArgumentParser(description='Call Enphase API to fetch data',
+                                 usage = 'python get-solarinfo.py [-h] -e endpoint')
+requiredArgs = parser.add_argument_group('required arguments')
+requiredArgs.add_argument('-e', action='store',
+                          required = True,
+                          dest='endpoint',
+                          help='Name of the Enlighten Systems endpoint. e.g. consumption_lifetime,consumption_stats,energy_lifetime, envoys, index, inventory, monthly_production, production_meter_readings, rgm_stats, stats, summary, arrays?range=today&view=energy_production ',)
+inputargs = parser.parse_args()
+
+print inputargs.endpoint
 
 SITE = 'https://api.enphaseenergy.com/api/v2'
-KEY = '?key=XXXXXX&user_id=XXXX'
+#KEY = '?key=XXXXXX&user_id=XXXX'
+apikey = os.environ.get("apikey")
+siteid = os.environ.get("siteid")+"/"
+userid = os.environ.get("userid")
+KEY = "?key="+apikey+"&user_id="+userid
 
-
-# Call x - Test call for Energy Production
-
-APICALLX = '/systems/484/arrays?range=today&view=energy_production'
-URL=SITE+APICALLX+KEY
-#getcontent(URL)
-
-
-# Call 1 - Summary
-APICALL = '/systems/484/summary'
+# Call getcontent for systems. 
+APICALL = '/systems/' + siteid + inputargs.endpoint
 URL=SITE+APICALL+KEY
 getcontent(URL)
-
-# Call 2 - Systems
-APICALL2 = '/systems'
-URL=SITE+APICALL2+KEY
-#getcontent(URL)
-
-
-APICALL3 = '/systems/484/energy_lifetime'
-APICALL4 = '/systems/484/consumption_stats'
-APICALL4 = '/systems/484/envoys'
